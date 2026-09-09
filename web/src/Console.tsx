@@ -16,6 +16,9 @@ export interface ConsoleProps {
 
 // The export MUST be named `Console` — the shell looks for exactly that.
 export function Console({ apiBase, token, onUnauthorized }: ConsoleProps) {
+  // The host passes apiBase with a trailing slash; our paths start with one.
+  const api = (path: string) => `${apiBase.replace(/\/+$/, '')}${path}`
+
   const [hello, setHello] = useState<string>('')
   const [echo, setEcho] = useState<string>('')
   const [text, setText] = useState('hello from the console')
@@ -23,12 +26,12 @@ export function Console({ apiBase, token, onUnauthorized }: ConsoleProps) {
   const query = new URLSearchParams(window.location.search).get('q')
 
   async function callHello() {
-    const r = await fetch(`${apiBase}/api/hello`)
+    const r = await fetch(api('/api/hello'))
     setHello(await r.text())
   }
 
   async function callEcho() {
-    const r = await fetch(`${apiBase}/api/echo`, {
+    const r = await fetch(api('/api/echo'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify({ text }),
@@ -59,7 +62,7 @@ export function Console({ apiBase, token, onUnauthorized }: ConsoleProps) {
       <section className="sa__card">
         <h2>Public endpoint</h2>
         <p>
-          <code>GET {apiBase}/api/hello</code> — no login needed. This is also{' '}
+          <code>GET {api('/api/hello')}</code> — no login needed. This is also{' '}
           <code>zae sample hello</code> on the CLI.
         </p>
         <button className="sa__btn" onClick={callHello}>call it</button>
@@ -69,7 +72,7 @@ export function Console({ apiBase, token, onUnauthorized }: ConsoleProps) {
       <section className="sa__card">
         <h2>Authenticated endpoint</h2>
         <p>
-          <code>POST {apiBase}/api/echo</code> — the addon validates your bearer against the
+          <code>POST {api('/api/echo')}</code> — the addon validates your bearer against the
           instance's issuer itself. On the CLI this is <code>zae sample echo</code> (exit 5
           without a token).
         </p>
