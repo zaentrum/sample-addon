@@ -1,0 +1,5 @@
+web/node_modules/
+# The embed build is produced in CI/Docker; only the placeholder is tracked so
+# go:embed compiles without a node toolchain.
+internal/api/web/embed/*
+!internal/api/web/embed/.keep

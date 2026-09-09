@@ -1,0 +1,17 @@
+/* Deliberately plain: a third party copying this addon should not inherit a
+   design-system dependency. Inherit the shell's font and colours. */
+.sa { max-width: 720px; margin: 0 auto; padding: 24px 16px; font: inherit; color: inherit; }
+.sa__title { font-size: 1.6rem; margin: 0 0 8px; }
+.sa__lede { opacity: .8; margin: 0 0 12px; }
+.sa__hint { padding: 8px 12px; border-left: 3px solid currentColor; opacity: .85; }
+.sa__card { border: 1px solid rgba(128,128,128,.35); border-radius: 8px; padding: 16px; margin: 16px 0; }
+.sa__card h2 { font-size: 1.05rem; margin: 0 0 6px; }
+.sa__btn { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid currentColor;
+  background: transparent; color: inherit; cursor: pointer; margin: 8px 8px 0 0; }
+.sa__btn:hover { background: rgba(128,128,128,.15); }
+.sa__input { font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(128,128,128,.5);
+  background: transparent; color: inherit; width: 100%; box-sizing: border-box; margin-top: 8px; }
+.sa__out { margin: 10px 0 0; padding: 10px; border-radius: 6px; background: rgba(128,128,128,.12);
+  overflow: auto; font-size: .85rem; }
+.sa__foot { opacity: .6; font-size: .85rem; margin-top: 24px; }
+.sa code { font-size: .85em; }

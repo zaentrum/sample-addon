@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sample addon — console (standalone dev)</title>
+  </head>
+  <body>
+    <!-- Standalone entry: lets you `npm run dev` the console against a local
+         addon without the portal. In production the portal mounts ./Console
+         via module federation and this page is never served. -->
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
