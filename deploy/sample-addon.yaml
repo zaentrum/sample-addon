@@ -1,11 +1,10 @@
 # The whole install unit of the reference addon: one Deployment, one Service.
 # No Ingress, no Route — the portal's proxy is the addon's front door, and the
-# console is served by the addon's own binary.
+# console is served by the addon's own binary. No Secret — the addon holds no
+# credentials; the platform pulls its manifest when an admin installs it.
 #
 # Things you must supply (see deploy/README.md):
-#   - a Secret `sample-addon-oidc` with client-id / client-secret: the addon's
-#     service-account client on YOUR instance's realm, carrying the addon role
-#   - PUBLIC_BASE and OIDC_ISSUER for your instance
+#   - OIDC_ISSUER for your instance (only the authenticated endpoint needs it)
 #   - hostAliases if your cluster cannot resolve the public hostname from
 #     inside (the platform's own services do the same — check one of them)
 apiVersion: apps/v1
@@ -29,17 +28,7 @@ spec:
             - { containerPort: 8080, name: http }
           env:
             - { name: ADDON_KEY,   value: "sample" }
-            - { name: PUBLIC_BASE, value: "https://media.example.org" }
             - { name: OIDC_ISSUER, value: "https://media.example.org/auth/realms/zaentrum" }
-            # Where to mint the service token. Defaults to the issuer's token
-            # endpoint; override if your identity provider is reached
-            # differently from inside the cluster.
-            # - { name: OIDC_TOKEN_URL, value: "https://media.example.org/auth/realms/zaentrum/protocol/openid-connect/token" }
-            - { name: PORTAL_URL,  value: "http://portal-api" }
-            - name: CLIENT_ID
-              valueFrom: { secretKeyRef: { name: sample-addon-oidc, key: client-id } }
-            - name: CLIENT_SECRET
-              valueFrom: { secretKeyRef: { name: sample-addon-oidc, key: client-secret } }
           readinessProbe:
             httpGet: { path: /healthz, port: http }
             periodSeconds: 5

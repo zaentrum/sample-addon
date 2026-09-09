@@ -52,7 +52,7 @@ export function Console({ apiBase, token, onUnauthorized }: ConsoleProps) {
       {query && (
         <p className="sa__hint">
           You arrived from the search slot with the query <code>{query}</code> — that is the
-          <code>{'{q}'}</code> placeholder in the addon's registered button.
+          <code>{'{q}'}</code> placeholder in the button the addon declares.
         </p>
       )}
 

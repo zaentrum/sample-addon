@@ -63,3 +63,39 @@ func TestPublicSurface(t *testing.T) {
 		t.Fatalf("anonymous POST /api/echo must be 401, got %d", rec.Code)
 	}
 }
+
+// The manifest's ui section is what the platform materialises on install. It
+// must be self-consistent: a console that is declared must be baked into the
+// binary, every slot row must have somewhere to go and something to say, and
+// URLs must be portal-relative so the platform can absolutise them.
+func TestManifestUIIsInstallable(t *testing.T) {
+	s := New(Config{AddonKey: "sample"})
+	ui := s.capabilityDoc().UI
+	if ui == nil {
+		t.Fatal("the reference addon declares a ui section")
+	}
+	if ui.App.Title == "" || ui.App.Icon == "" {
+		t.Errorf("app needs a title and an icon: %+v", ui.App)
+	}
+	if ui.Console {
+		rec := httptest.NewRecorder()
+		s.Handler().ServeHTTP(rec, httptest.NewRequest("GET", "/embed/assets/remoteEntry.js", nil))
+		if rec.Code != 200 {
+			t.Errorf("console:true but /embed/assets/remoteEntry.js answers %d — build web/ first", rec.Code)
+		}
+	}
+	if len(ui.Slots) == 0 {
+		t.Fatal("the reference addon contributes at least one slot row")
+	}
+	for _, sl := range ui.Slots {
+		if sl.Slot == "" || sl.Label == "" || sl.Key == "" {
+			t.Errorf("slot row needs key, slot and label: %+v", sl)
+		}
+		if !strings.HasPrefix(sl.URL, "/") {
+			t.Errorf("slot url must be portal-relative (the platform absolutises it): %q", sl.URL)
+		}
+		if !strings.Contains(sl.URL, "/portal/app/sample") {
+			t.Errorf("slot url should open this addon's own console: %q", sl.URL)
+		}
+	}
+}

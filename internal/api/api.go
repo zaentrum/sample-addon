@@ -8,6 +8,11 @@
 //     bearer forwarded — which the addon validates itself against the
 //     instance's issuer. The portal forwards tokens; it does not vouch for
 //     them.
+//
+// There is no registration code anywhere in this addon. What it contributes
+// to the UI is DECLARED in the capability descriptor (capability.go); the
+// platform pulls that manifest when an admin installs the addon and creates
+// the rows itself.
 package api
 
 import (
@@ -25,26 +30,22 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-
-	"github.com/zaentrum/sample-addon/internal/register"
 )
 
 // Config is everything the addon learns about its instance. All of it comes
-// from the environment; none of it is compiled in.
+// from the environment; none of it is compiled in — and there is deliberately
+// little of it. An addon needs no identity of its own to be installed: the
+// platform pulls its manifest and creates what it declares.
 type Config struct {
 	Port string
 	// OIDCIssuer is the instance's issuer (advertised by /api/config on the
-	// instance). The addon validates user bearers against it.
+	// instance). The addon validates user bearers against it. Only the
+	// authenticated endpoint needs it; everything else works without.
 	OIDCIssuer string
-	// Self-registration identity: a confidential client with a service account
-	// carrying the instance's addon role. See internal/register.
-	TokenURL     string
-	ClientID     string
-	ClientSecret string
-	PortalURL    string // in-cluster portal-api, e.g. http://portal-api
-	PublicBase   string // public origin, for the slot button's URL
-	AddonKey     string // registry key: app key AND descriptor service name
-	Version      string
+	// AddonKey is the descriptor's service name, which the platform uses as
+	// the app key when it installs the addon.
+	AddonKey string
+	Version  string
 }
 
 func env(k, def string) string {
@@ -55,16 +56,10 @@ func env(k, def string) string {
 }
 
 func ConfigFromEnv() Config {
-	issuer := env("OIDC_ISSUER", "")
 	return Config{
-		Port:         env("PORT", "8080"),
-		OIDCIssuer:   issuer,
-		TokenURL:     env("OIDC_TOKEN_URL", strings.TrimRight(issuer, "/")+"/protocol/openid-connect/token"),
-		ClientID:     env("CLIENT_ID", ""),
-		ClientSecret: env("CLIENT_SECRET", ""),
-		PortalURL:    env("PORTAL_URL", ""),
-		PublicBase:   env("PUBLIC_BASE", ""),
-		AddonKey:     env("ADDON_KEY", "sample"),
+		Port:       env("PORT", "8080"),
+		OIDCIssuer: env("OIDC_ISSUER", ""),
+		AddonKey:   env("ADDON_KEY", "sample"),
 	}
 }
 
@@ -75,21 +70,9 @@ type Server struct {
 	cfg      Config
 	verifier *oidc.IDTokenVerifier // nil until the issuer is reachable
 	verifyMu sync.Mutex
-
-	regMu sync.Mutex
-	reg   register.Status
 }
 
 func New(cfg Config) *Server { return &Server{cfg: cfg} }
-
-// RecordRegistration is how the register loop reports; the health check
-// surfaces it, so "installed but its button never appeared" is diagnosable
-// from the outside instead of being a mystery.
-func (s *Server) RecordRegistration(st register.Status) {
-	s.regMu.Lock()
-	defer s.regMu.Unlock()
-	s.reg = st
-}
 
 func (s *Server) Handler() http.Handler {
 	r := chi.NewRouter()
@@ -192,23 +175,46 @@ func (noIssuer) Error() string { return "OIDC_ISSUER is not configured" }
 
 var errNoIssuer = noIssuer{}
 
-// systemHealth is the addon's registered check for `zae doctor`: it reports
-// whether self-registration succeeded, which is the one thing an operator
-// cannot otherwise see without reading logs.
+// systemHealth is the check the addon declares for `zae doctor`. It reports
+// the two things an operator cannot see from outside: whether the console is
+// actually baked into this binary, and whether the authenticated endpoint can
+// work at all (an issuer is configured). Neither failing stops the addon from
+// serving — that is the point of reporting them.
 func (s *Server) systemHealth(w http.ResponseWriter, _ *http.Request) {
-	s.regMu.Lock()
-	st := s.reg
-	s.regMu.Unlock()
-	checks := []map[string]any{{
-		"name":   "slot registration",
-		"ok":     st.Registered,
-		"detail": st.Detail(),
-	}}
+	_, consoleErr := fs.Stat(webFS, "web/embed/assets/remoteEntry.js")
+	checks := []map[string]any{
+		{
+			"name":   "console",
+			"ok":     consoleErr == nil,
+			"detail": consoleDetail(consoleErr),
+		},
+		{
+			"name":   "issuer",
+			"ok":     s.cfg.OIDCIssuer != "",
+			"detail": issuerDetail(s.cfg.OIDCIssuer),
+		},
+	}
 	status := "ok"
-	if !st.Registered && st.Skipped == "" {
-		status = "degraded"
+	for _, c := range checks {
+		if ok, _ := c["ok"].(bool); !ok {
+			status = "degraded"
+		}
 	}
 	writeJSON(w, 200, map[string]any{"status": status, "checks": checks, "version": s.cfg.Version})
+}
+
+func consoleDetail(err error) string {
+	if err != nil {
+		return "no console in this binary — build web/ before go build, or the portal tile opens an empty page"
+	}
+	return "federated console embedded at /embed/"
+}
+
+func issuerDetail(issuer string) string {
+	if issuer == "" {
+		return "OIDC_ISSUER unset — POST /api/echo will answer 503; public endpoints unaffected"
+	}
+	return "verifying user bearers against " + issuer
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
