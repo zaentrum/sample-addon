@@ -7,6 +7,11 @@ on:
 permissions:
   contents: read
   packages: write
+# One image build at a time per ref: two in-flight builds race for :latest,
+# and the OLDER commit can win.
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   image:
     runs-on: ubuntu-latest
@@ -34,3 +39,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: VERSION=${{ steps.meta.outputs.version }}
           tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
