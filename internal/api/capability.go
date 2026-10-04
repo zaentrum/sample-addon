@@ -75,7 +75,7 @@ func (s *Server) capabilityDoc() capability {
 		Kind:    "addon",
 		Version: s.cfg.Version,
 		Commands: []capCommand{
-			{Name: "hello", Summary: "say hello (public — exits 0 with no login)", Method: "GET", Path: "/api/hello"},
+			{Name: "hello", Summary: "say hello (no role needed; the portal asks for a sign-in)", Method: "GET", Path: "/api/hello"},
 			{Name: "echo", Summary: "echo a JSON body back (requires a signed-in user)", Method: "POST", Path: "/api/echo", Role: "user"},
 		},
 		Checks: []capCheck{

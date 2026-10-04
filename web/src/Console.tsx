@@ -25,15 +25,24 @@ export function Console({ apiBase, token, onUnauthorized }: ConsoleProps) {
 
   const query = new URLSearchParams(window.location.search).get('q')
 
+  // Every request through the portal's proxy needs the user's bearer — the
+  // proxy turns away anything else — even where the addon itself asks for none.
+  const auth = token ? { Authorization: `Bearer ${token}` } : undefined
+
   async function callHello() {
-    const r = await fetch(api('/api/hello'))
+    const r = await fetch(api('/api/hello'), { headers: auth })
+    if (r.status === 401) {
+      onUnauthorized?.()
+      setHello('401 — the shell was asked to re-authenticate')
+      return
+    }
     setHello(await r.text())
   }
 
   async function callEcho() {
     const r = await fetch(api('/api/echo'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: { 'Content-Type': 'application/json', ...auth },
       body: JSON.stringify({ text }),
     })
     if (r.status === 401) {
@@ -60,10 +69,11 @@ export function Console({ apiBase, token, onUnauthorized }: ConsoleProps) {
       )}
 
       <section className="sa__card">
-        <h2>Public endpoint</h2>
+        <h2>Open endpoint</h2>
         <p>
-          <code>GET {api('/api/hello')}</code> — no login needed. This is also{' '}
-          <code>zae sample hello</code> on the CLI.
+          <code>GET {api('/api/hello')}</code> — the addon asks for no role here; the portal's
+          proxy still wants you signed in, as for every request through it. This is also{' '}
+          <code>zae sample hello</code> on the CLI, after <code>zae login</code>.
         </p>
         <button className="sa__btn" onClick={callHello}>call it</button>
         {hello && <pre className="sa__out">{hello}</pre>}

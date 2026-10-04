@@ -10,7 +10,7 @@ integration than this one.
 | **UI slot** | Declares one button for chino's `search.empty` slot; the platform creates the row when an admin installs the addon | `internal/api/capability.go` (`ui.slots`) |
 | **Hosted console** | A React module the portal mounts in-page, served by this binary; declared with `ui.console` so the platform places a tile | `web/`, `internal/api/api.go` (`/embed/`) |
 | **CLI capability** | Declares two commands and a check, so `zae sample hello` exists wherever it runs | `internal/api/capability.go` |
-| **Its own API** | One public endpoint; one that validates the user's bearer against the instance's issuer | `internal/api/api.go` |
+| **Its own API** | One endpoint that asks for no role; one that validates the user's bearer against the instance's issuer. Through the portal's proxy both need a signed-in user | `internal/api/api.go` |
 
 One document — the capability manifest — declares all of it. The addon never
 writes to the platform and holds no credentials: an admin adds it in the
@@ -26,13 +26,19 @@ zaentrum docs. This repo shows one honest implementation of each.
 ```
 $ zae discover --url https://<instance>
 sample (addon)
-  zae sample hello               say hello (public — exits 0 with no login)
+  zae sample hello               say hello (no role needed; the portal asks for a sign-in)
   zae sample echo                echo a JSON body back (requires a signed-in user)
   check: system
 
+$ zae login --url https://<instance>
 $ zae sample hello --url https://<instance>
 {"hello":"from the sample addon","addon":"sample","version":"…"}
 ```
+
+Every addon command goes through the portal's proxy, which turns away a
+request without a signed-in user's bearer (401, `zae` exit 5). The addon's
+console bundle (`/embed/`) and its descriptor (`/.well-known/`) are the only
+paths the proxy serves without one.
 
 ## What to copy, and what to change
 
@@ -70,7 +76,7 @@ and that the manifest's `ui` section is installable.
 
 | | |
 |---|---|
-| Slot button, console, descriptor, public + authenticated endpoints | ✅ |
+| Slot button, console, descriptor, open + authenticated endpoints | ✅ |
 | Install from the portal's settings (app, tile, slot row created by the platform) | ✅ — one action, no identity, removable by key |
 | Events on the bus | none — this addon emits nothing, and its descriptor says so |
 

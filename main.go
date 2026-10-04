@@ -11,8 +11,9 @@
 //   - a CLI capability descriptor — so `zae sample hello` exists on any
 //     instance running this addon, and vanishes when it is removed
 //     (internal/api/capability.go);
-//   - two API endpoints reached through the portal's proxy: one public, one
-//     that validates the caller's bearer against the instance's issuer.
+//   - two API endpoints reached through the portal's proxy (which wants a
+//     signed-in user for both): one that asks for no role, one that
+//     validates the caller's bearer against the instance's issuer itself.
 //
 // Everything it needs arrives as environment (see config); nothing about the
 // instance is compiled in, and it holds no credentials of its own. Installing

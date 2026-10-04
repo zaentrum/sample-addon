@@ -92,9 +92,10 @@ func (s *Server) Handler() http.Handler {
 	sub, _ := fs.Sub(webFS, "web/embed")
 	r.Handle("/embed/*", http.StripPrefix("/embed/", http.FileServer(http.FS(sub))))
 
-	// The addon's API. One public endpoint so the dynamic CLI has something
-	// that exits 0 with no login; one that requires a valid user bearer, so
-	// the reference shows how an addon validates the caller.
+	// The addon's API. One endpoint that asks for no role, so the dynamic CLI
+	// has something simple to call; one that validates the user's bearer
+	// itself, so the reference shows how an addon checks the caller. The
+	// portal's proxy wants a signed-in user in front of both.
 	r.Get("/api/hello", s.hello)
 	r.Post("/api/echo", s.requireUser(s.echo))
 	return r
@@ -105,7 +106,7 @@ func (s *Server) hello(w http.ResponseWriter, r *http.Request) {
 		"hello":   "from the sample addon",
 		"addon":   s.cfg.AddonKey,
 		"version": s.cfg.Version,
-		"note":    "this endpoint is public; POST /api/echo requires a signed-in user",
+		"note":    "this endpoint asks for no role; POST /api/echo validates your bearer itself",
 	})
 }
 
