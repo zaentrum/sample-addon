@@ -35,7 +35,8 @@ under *Extend it → Installing addons*; this is the addon-side view.
 
 Then: the button appears on an empty search in chino, the console is at
 `/portal/app/sample`, and `zae discover --url https://<your instance>` lists
-`zae sample hello`.
+`zae sample hello`. **Send Me a Notice** in the console puts a notice in the
+bell in the portal's header, and in the apps.
 
 **Upgrade** that changes the manifest: settings → addons → *refresh* (the same
 call as install; rows are replaced, not merged).

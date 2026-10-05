@@ -11,11 +11,31 @@ integration than this one.
 | **Hosted console** | A React module the portal mounts in-page, served by this binary; declared with `ui.console` so the platform places a tile | `web/`, `internal/api/api.go` (`/embed/`) |
 | **CLI capability** | Declares two commands and a check, so `zae sample hello` exists wherever it runs | `internal/api/capability.go` |
 | **Its own API** | One endpoint that asks for no role; one that validates the user's bearer against the instance's issuer. Through the portal's proxy both need a signed-in user | `internal/api/api.go` |
+| **Notices** | The console's **Send Me a Notice** tells the signed-in person something; the bell in the portal's header shows it, and so do the apps | `web/src/Console.tsx` (`sendNotice`) |
 
-One document — the capability manifest — declares all of it. The addon never
-writes to the platform and holds no credentials: an admin adds it in the
-portal's settings by its in-cluster address, and the platform pulls the
-manifest and creates what it declares.
+One document — the capability manifest — declares all of it. The addon holds
+no credentials: an admin adds it in the portal's settings by its in-cluster
+address, and the platform pulls the manifest and creates what it declares. Its
+one write to the platform is a notice its console posts with the signed-in
+person's own bearer, which reaches that person and nobody else.
+
+## Notices
+
+`sendNotice` in the console posts `{addon, title, body, link}` to the portal's
+`POST /api/portal/me/notices` with the bearer the shell handed the console: a
+notice to the person whose bearer it is, from this addon, with a link back to
+the console. The portal's API is what comes before `/apps/` in `apiBase`, and
+the addon's key what follows it. The title is at most 80 characters, the body
+at most 280, both plain text; the link is a path on the instance.
+
+That is the one way to post a notice without a credential, and why it reaches
+nobody else: the body names no person. An addon that tells someone something
+later — when their title is ready — posts with its service account instead,
+`POST /api/portal/notices {sub, title, body, link?, itemId?}`, where `sub` is
+the person's token subject, which its API reads from the bearer it validates
+when they call it. The service account is a confidential client named after
+the addon, with the `zaentrum-addon` role; the platform docs, *Extend it →
+Notices* and *Addon identity*, say how to make one.
 
 The platform-side contracts are documented canonically under
 **[Extend it](https://github.com/zaentrum/zaentrum/wiki/extending)** in the
@@ -78,6 +98,8 @@ and that the manifest's `ui` section is installable.
 |---|---|
 | Slot button, console, descriptor, open + authenticated endpoints | ✅ |
 | Install from the portal's settings (app, tile, slot row created by the platform) | ✅ — one action, no identity, removable by key |
+| A notice to the signed-in person, from the console | ✅ — with their own bearer, to them only |
+| A notice to someone else, or later | not here — it takes a service account, which this addon does not hold |
 | Events on the bus | none — this addon emits nothing, and its descriptor says so |
 
 ## License
