@@ -87,7 +87,7 @@ func (s *Server) capabilityDoc() capability {
 		UI: &capUI{
 			App: capApp{
 				Title:       "Sample addon",
-				Description: "the reference addon — one button, one console, two commands",
+				Description: "the reference addon — one button, one console, two commands, a notice",
 				Icon:        "puzzle",
 			},
 			// The console is served from this binary at /embed/; the platform

@@ -13,7 +13,10 @@
 //     (internal/api/capability.go);
 //   - two API endpoints reached through the portal's proxy (which wants a
 //     signed-in user for both): one that asks for no role, one that
-//     validates the caller's bearer against the instance's issuer itself.
+//     validates the caller's bearer against the instance's issuer itself;
+//   - a notice — the console's Send Me a Notice tells the signed-in person
+//     something through the portal's notices, which the bell in the portal's
+//     header and the apps show (web/src/Console.tsx).
 //
 // Everything it needs arrives as environment (see config); nothing about the
 // instance is compiled in, and it holds no credentials of its own. Installing
