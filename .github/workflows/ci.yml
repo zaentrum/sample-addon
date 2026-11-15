@@ -3,6 +3,17 @@ on:
   push: { branches: [main] }
   pull_request: {}
 jobs:
+  # A fresh checkout builds without node: go:embed finds the placeholder that
+  # the console's build fills later. The tests need the console; `test` builds
+  # it first.
+  fresh-checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.24" }
+      - run: go build ./...
+      - run: go vet ./...
   test:
     runs-on: ubuntu-latest
     steps:
