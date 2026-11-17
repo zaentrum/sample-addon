@@ -3,6 +3,16 @@ on:
   push: { branches: [main] }
   pull_request: {}
 jobs:
+  # The organisation's shared neutrality check, called at a commit of
+  # zaentrum/.github.
+  neutrality:
+    permissions:
+      contents: read
+    uses: zaentrum/.github/.github/workflows/neutrality.yml@abe9764fff8db311f40ac49e13433686f83087c9
+    with:
+      exceptions: |
+        .github/workflows/ci.yml  holds the older neutrality step until the shared check replaces it
+
   # A fresh checkout builds without node: go:embed finds the placeholder that
   # the console's build fills later. The tests need the console; `test` builds
   # it first.
