@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "tsc -b && vite build --config vite.embed.config.ts",
+    "build": "tsc -b && vite build --config vite.embed.config.ts && node -e \"require('fs').writeFileSync('../internal/api/web/embed/.keep', '')\"",
     "check": "tsc -b",
     "dev": "vite"
   },

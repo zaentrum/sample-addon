@@ -1,4 +1,6 @@
 web/node_modules/
+# tsc -b's record of its last build, written on every build.
+web/*.tsbuildinfo
 # The embed build is produced in CI/Docker; only the placeholder is tracked so
 # go:embed compiles without a node toolchain.
 internal/api/web/embed/*
