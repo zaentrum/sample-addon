@@ -77,8 +77,6 @@ lists `zae sample hello`.
 
 ## Before a pull request
 
-`ci.yml` fails on two checks of its own:
-
-- `gofmt -l .` has to print nothing; `gofmt -w .` formats the code.
-- Its neutrality gate searches `*.go`, `*.md`, `*.ts`, `*.tsx`, `*.yaml` and `*.yml` for the
-  project's internal host names and the names of download tools; a match fails the job.
+`ci.yml` fails where `gofmt -l .` prints anything; `gofmt -w .` formats the code.
+The organisation's shared check, the workflow's `neutrality` job, is the one
+neutrality check.

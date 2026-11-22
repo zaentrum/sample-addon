@@ -8,9 +8,6 @@ jobs:
     permissions:
       contents: read
     uses: zaentrum/.github/.github/workflows/neutrality.yml@v1
-    with:
-      exceptions: |
-        .github/workflows/ci.yml  holds the older neutrality check until the shared check replaces it
 
   # A fresh checkout builds without node: go:embed finds the placeholder that
   # the console's build fills later. The tests need the console; `test` builds
@@ -39,14 +36,5 @@ jobs:
       - run: test -z "$(gofmt -l .)"
       - run: go vet ./...
       - run: go test ./...
-      # The reference addon must be as neutral as the platform: no internal
-      # hostnames, no acquisition tooling. Patterns are split so this file
-      # never trips itself.
-      - name: neutrality gate
-        run: |
-          H="$(printf '%s' 'nalet' '\.' 'cloud')|$(printf '%s' 'implentic' '\.' 'com')"
-          T="$(printf '%s' 'nzb' 'get')|$(printf '%s' 'qbit' 'torrent')|$(printf '%s' 'son' 'arr')|$(printf '%s' 'rad' 'arr')|$(printf '%s' 'prow' 'larr')"
-          ! grep -rniE "$H|\b($T)\b" --include="*.go" --include="*.md" --include="*.ts" --include="*.tsx" --include="*.yaml" --include="*.yml" . \
-            || { echo "::error::internal hostname or acquisition tool name in the reference addon"; exit 1; }
       - name: container build (sanity)
         run: docker build -t sample-addon:ci .
